@@ -1,12 +1,15 @@
 package krawczyk.krystian.fallingdetector.data;
 
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+import java.util.Objects;
 
 public class DetectorProvider extends ContentProvider {
 
@@ -35,7 +38,27 @@ public class DetectorProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable
             String[] selectionArgs, @Nullable String sortOrder) {
-        return null;
+
+        Cursor cursor;
+
+        switch (sUriMatcher.match(uri)) {
+            case CODE_CONTACT_LIST:
+                cursor = mDbHelper.getReadableDatabase().query(
+                        DetectorContract.DetectorEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri ");
+        }
+
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
     }
 
     @Nullable
@@ -47,7 +70,28 @@ public class DetectorProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
-        return null;
+        Uri retUri;
+
+        switch (sUriMatcher.match(uri)) {
+            case CODE_CONTACT_LIST:
+                long insertedId = mDbHelper.getWritableDatabase().insert(
+                        DetectorContract.DetectorEntry.TABLE_NAME,
+                        null,
+                        values);
+
+                if (insertedId > 0) {
+                    retUri = ContentUris.withAppendedId(DetectorContract.DetectorEntry.CONTENT_URI, insertedId);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknow uri: " + uri);
+        }
+
+        Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
+
+        return retUri;
     }
 
     @Override
