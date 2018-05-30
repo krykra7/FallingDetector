@@ -25,6 +25,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="krawczyk.krystian.fallingdetector.MainActivity"/>
         </activity>
-    </application>
 
+        <provider
+            android:name="krawczyk.krystian.fallingdetector.data.DetectorProvider"
+            android:authorities="krawczyk.krystian.fallingdetector"
+            android:exported="false"/>
+
+    </application>
 </manifest>

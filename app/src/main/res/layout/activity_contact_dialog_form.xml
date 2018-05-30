@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/et_number_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/form_item_spacing"
+        android:layout_marginTop="@dimen/form_item_spacing"
+        android:background="@android:color/transparent"
+        android:hint="@string/contact_dialog_number"
+        android:inputType="number"
+        android:textSize="@dimen/form_item_text_size"/>
+
+    <EditText
+        android:id="@+id/et_name_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/form_item_spacing"
+        android:layout_marginTop="@dimen/form_item_spacing"
+        android:background="@android:color/transparent"
+        android:hint="@string/contact_dialog_name"
+        android:inputType="text"
+        android:textSize="@dimen/form_item_text_size"/>
+
+    <EditText
+        android:id="@+id/et_surname_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/form_item_spacing"
+        android:layout_marginTop="@dimen/form_item_spacing"
+        android:background="@android:color/transparent"
+        android:hint="@string/contact_dialog_surname"
+        android:inputType="text"
+        android:textSize="@dimen/form_item_text_size"/>
+
+    <EditText
+        android:id="@+id/et_message_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/form_item_spacing"
+        android:layout_marginTop="@dimen/form_item_spacing"
+        android:background="@android:color/transparent"
+        android:hint="@string/contact_dialog_message"
+        android:inputType="text"
+        android:textSize="@dimen/form_item_text_size"/>
+
+</LinearLayout>

@@ -17,11 +17,11 @@ public class DetectorDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase database) {
         final String SQL_CREATE_DETECTOR_TABLE =
                 "CREATE TABLE " + DetectorContract.DetectorEntry.TABLE_NAME + " (" +
-                        DetectorContract.DetectorEntry._ID + " INT PRIMARY KEY AUTOINCREMENT, " +
+                        DetectorContract.DetectorEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         DetectorContract.DetectorEntry.COLUMN_NUMBER + " INT NOT NULL ON CONFLICT REPLACE, " +
                         DetectorContract.DetectorEntry.COLUMN_NAME + " TEXT, " +
                         DetectorContract.DetectorEntry.COLUMN_SURNAME + " TEXT, " +
-                        DetectorContract.DetectorEntry.COLUMN_MESSAGE + " TEXT NOT NULL";
+                        DetectorContract.DetectorEntry.COLUMN_MESSAGE + " TEXT NOT NULL)";
 
         database.execSQL(SQL_CREATE_DETECTOR_TABLE);
     }
