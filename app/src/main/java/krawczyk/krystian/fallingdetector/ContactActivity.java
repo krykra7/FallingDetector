@@ -56,6 +56,8 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         contactAdapter = new ContactAdapter(this);
         contactRecyclerView.setAdapter(contactAdapter);
 
+        attachSwipeToDelete();
+
         getSupportLoaderManager().initLoader(CONTACT_LOADER_ID, null, this);
     }
 

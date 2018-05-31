@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -96,7 +97,26 @@ public class DetectorProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        int deletedContact;
+
+        final SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        switch (sUriMatcher.match(uri)) {
+            case CODE_SINGLE_CONTACT:
+                String id = uri.getLastPathSegment();
+                String tableName = DetectorContract.DetectorEntry.TABLE_NAME;
+
+                deletedContact = database.delete(tableName, "_id=?", new String[]{id});
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if (deletedContact != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return deletedContact;
     }
 
     @Override
