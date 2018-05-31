@@ -1,25 +1,49 @@
 package krawczyk.krystian.fallingdetector;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import krawczyk.krystian.fallingdetector.contacts.ContactAdapter;
 import krawczyk.krystian.fallingdetector.data.DetectorContract;
 
-public class ContactActivity extends AppCompatActivity {
+public class ContactActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final int CONTACT_LOADER_ID = 2013;
+    private static final String TAG = ContactActivity.class.getSimpleName();
+
+    @BindView(R.id.recyclerview_contacts)
+    RecyclerView contactRecyclerView;
+
+    private ContactAdapter contactAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact);
+        ButterKnife.bind(this);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -27,6 +51,12 @@ public class ContactActivity extends AppCompatActivity {
         fab.setOnClickListener((View view) -> getInsertContactDialog().show());
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        contactRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        contactAdapter = new ContactAdapter(this);
+        contactRecyclerView.setAdapter(contactAdapter);
+
+        getSupportLoaderManager().initLoader(CONTACT_LOADER_ID, null, this);
     }
 
     private MaterialDialog getInsertContactDialog() {
@@ -57,5 +87,81 @@ public class ContactActivity extends AppCompatActivity {
         if (uri != null) {
             Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_SHORT).show();
         }
+
+        getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, this);
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+        return new AsyncTaskLoader<Cursor>(this) {
+
+            Cursor mContactData;
+
+            @Override
+            protected void onStartLoading() {
+                if (mContactData != null) {
+                    deliverResult(mContactData);
+                } else {
+                    forceLoad();
+                }
+            }
+
+            @Nullable
+            @Override
+            public Cursor loadInBackground() {
+                try {
+                    return getContentResolver().query(DetectorContract.DetectorEntry.CONTENT_URI,
+                            null,
+                            null,
+                            null,
+                            DetectorContract.DetectorEntry.COLUMN_NAME);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Failed to load data from database.");
+                    ex.printStackTrace();
+                    return null;
+                }
+            }
+
+            @Override
+            public void deliverResult(@Nullable Cursor data) {
+                mContactData = data;
+                super.deliverResult(data);
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        contactAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        contactAdapter.swapCursor(null);
+    }
+
+    private void attachSwipeToDelete() {
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView
+                    .ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                int contactId = (int) viewHolder.itemView.getTag();
+
+                String stringid = Integer.toString(contactId);
+                Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
+                uri = uri.buildUpon().appendPath(stringid).build();
+
+                getContentResolver().delete(uri, null, null);
+
+                getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
+            }
+        }).attachToRecyclerView(contactRecyclerView);
     }
 }
