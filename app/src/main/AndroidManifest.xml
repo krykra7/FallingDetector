@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="krawczyk.krystian.fallingdetector">
 
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -31,5 +33,9 @@
             android:authorities="krawczyk.krystian.fallingdetector"
             android:exported="false"/>
 
+        <service
+            android:name=".service.DetectorService"
+            android:exported="false"
+            />
     </application>
 </manifest>
