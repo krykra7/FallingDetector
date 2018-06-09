@@ -2,6 +2,8 @@ package krawczyk.krystian.fallingdetector;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,12 +25,18 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 
+import java.util.Objects;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import krawczyk.krystian.fallingdetector.contacts.ContactAdapter;
 import krawczyk.krystian.fallingdetector.data.DetectorContract;
 
-public class ContactActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ContactActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,
+        ContactAdapter.OnContactSelectionListener {
+
+    public static final String ACTIVITY_PREFS = "preferences";
+    public static final int NOT_SELECTED_INT = 0;
 
     private static final int CONTACT_LOADER_ID = 2013;
     private static final String TAG = ContactActivity.class.getSimpleName();
@@ -38,6 +46,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
     private ContactAdapter contactAdapter;
 
+    @SuppressLint("CommitPrefEdits")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +59,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener((View view) -> getInsertContactDialog().show());
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         contactRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         contactAdapter = new ContactAdapter(this);
@@ -83,6 +92,7 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_NAME, name);
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_SURNAME, surname);
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_MESSAGE, message);
+        contentValues.put(DetectorContract.DetectorEntry.COLUMN_SELECTED, NOT_SELECTED_INT);
 
         Uri uri = getContentResolver().insert(DetectorContract.DetectorEntry.CONTENT_URI, contentValues);
 
@@ -154,16 +164,42 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                int contactId = (int) viewHolder.itemView.getTag();
-
-                String stringid = Integer.toString(contactId);
-                Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
-                uri = uri.buildUpon().appendPath(stringid).build();
-
-                getContentResolver().delete(uri, null, null);
-
-                getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
+                if (!((ContactAdapter.ContactsAdapterViewHolder) viewHolder).getSelected()) {
+                    handleSwipe(viewHolder);
+                }
             }
         }).attachToRecyclerView(contactRecyclerView);
+    }
+
+    private void handleSwipe(RecyclerView.ViewHolder viewHolder) {
+        int contactId = (int) viewHolder.itemView.getTag();
+
+        String stringId = Integer.toString(contactId);
+        Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
+        uri = uri.buildUpon().appendPath(stringId).build();
+
+        getContentResolver().delete(uri, null, null);
+
+        getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
+    }
+
+    @Override
+    public void onSelectionChanged(ContactAdapter.ContactsAdapterViewHolder viewHolder) {
+        //todo solve multi selected contacts
+        Context context = getApplicationContext();
+        SharedPreferences.Editor editor = context.getSharedPreferences(ACTIVITY_PREFS, MODE_PRIVATE).edit();
+
+        editor.putInt(DetectorContract.DetectorEntry.COLUMN_NUMBER, viewHolder.getNumber()).apply();
+
+        int contactId = (int) viewHolder.itemView.getTag();
+        Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
+        uri = uri.buildUpon().appendPath(Integer.toString(contactId)).build();
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put(DetectorContract.DetectorEntry.COLUMN_SELECTED, viewHolder.getSelected());
+
+        getContentResolver().update(uri, contentValues, null, null);
+
+        getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
     }
 }

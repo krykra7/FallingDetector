@@ -3,6 +3,7 @@ package krawczyk.krystian.fallingdetector.contacts;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,16 +12,23 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import krawczyk.krystian.fallingdetector.ContactActivity;
 import krawczyk.krystian.fallingdetector.R;
 import krawczyk.krystian.fallingdetector.data.DetectorContract;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactsAdapterViewHolder> {
 
+    private static int currentSelectedContactId;
     private Cursor mCursor;
     private Context mContext;
+    private OnContactSelectionListener contactSelectionListener;
 
     public ContactAdapter(@NonNull Context context) {
         this.mContext = context;
+
+        if (context instanceof OnContactSelectionListener) {
+            this.contactSelectionListener = (OnContactSelectionListener) context;
+        }
     }
 
     public void swapCursor(Cursor cursor) {
@@ -45,15 +53,18 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
 
     @Override
     public void onBindViewHolder(@NonNull ContactsAdapterViewHolder holder, int position) {
+        //todo efficeciency improvement, move to ContactActivity.
         int idIndex = mCursor.getColumnIndex(DetectorContract.DetectorEntry._ID);
         int numberIndex = mCursor.getColumnIndex(DetectorContract.DetectorEntry.COLUMN_NUMBER);
         int nameIndex = mCursor.getColumnIndex(DetectorContract.DetectorEntry.COLUMN_NAME);
         int surnameIndex = mCursor.getColumnIndex(DetectorContract.DetectorEntry.COLUMN_SURNAME);
+        int selectionIndex = mCursor.getColumnIndex(DetectorContract.DetectorEntry.COLUMN_SELECTED);
 
         mCursor.moveToPosition(position);
 
         final int id = mCursor.getInt(idIndex);
         int number = mCursor.getInt(numberIndex);
+        int selection = mCursor.getInt(selectionIndex);
         String name = mCursor.getString(nameIndex);
         String surname = mCursor.getString(surnameIndex);
 
@@ -61,6 +72,14 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
         holder.contactNameTv.setText(name);
         holder.contactSurnameTv.setText(surname);
         holder.contactNumberTv.setText(String.valueOf(number));
+
+        if (selection != ContactActivity.NOT_SELECTED_INT) {
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.colorSelectedContact));
+            holder.isSelected = true;
+        } else {
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.colorDefaultBackground));
+            holder.isSelected = false;
+        }
     }
 
     @Override
@@ -71,7 +90,11 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
         return mCursor.getCount();
     }
 
-    class ContactsAdapterViewHolder extends RecyclerView.ViewHolder {
+    public interface OnContactSelectionListener {
+        void onSelectionChanged(ContactsAdapterViewHolder viewHolder);
+    }
+
+    public class ContactsAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener {
 
         @BindView(R.id.tv_contact_name)
         TextView contactNameTv;
@@ -80,9 +103,31 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
         @BindView(R.id.tv_contact_number)
         TextView contactNumberTv;
 
+        private Boolean isSelected;
+
         ContactsAdapterViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+            itemView.setOnLongClickListener(this);
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            isSelected = !isSelected;
+            contactSelectionListener.onSelectionChanged(this);
+            return true;
+        }
+
+        public int getNumber() {
+            return Integer.valueOf(contactNumberTv.getText().toString());
+        }
+
+        public Boolean getSelected() {
+            return isSelected;
+        }
+
+        public void setSelected(Boolean selected) {
+            isSelected = selected;
         }
     }
 }

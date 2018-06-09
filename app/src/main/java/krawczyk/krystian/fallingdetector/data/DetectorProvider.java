@@ -122,7 +122,26 @@ public class DetectorProvider extends ContentProvider {
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable
             String[] selectionArgs) {
-        return 0;
+
+        final SQLiteDatabase database = mDbHelper.getWritableDatabase();
+        int updatedContact;
+
+        switch (sUriMatcher.match(uri)) {
+            case CODE_SINGLE_CONTACT:
+                String id = uri.getLastPathSegment();
+                String tableName = DetectorContract.DetectorEntry.TABLE_NAME;
+
+                updatedContact = database.update(tableName, values, "_id=?", new String[]{id});
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if (updatedContact != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return updatedContact;
     }
 
 }

@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setupOnClickListener();
         requestPermission();
-        runService();
+//        runService();
     }
 
     private void setupOnClickListener() {
