@@ -18,7 +18,7 @@ import krawczyk.krystian.fallingdetector.data.DetectorContract;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactsAdapterViewHolder> {
 
-    private static int currentSelectedContactId;
+    private Integer currentSelectionId;
     private Cursor mCursor;
     private Context mContext;
     private OnContactSelectionListener contactSelectionListener;
@@ -29,6 +29,14 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
         if (context instanceof OnContactSelectionListener) {
             this.contactSelectionListener = (OnContactSelectionListener) context;
         }
+    }
+
+    public Integer getCurrentSelectionId() {
+        return currentSelectionId;
+    }
+
+    public void setCurrentSelectionId(Integer currentSelectionId) {
+        this.currentSelectionId = currentSelectionId;
     }
 
     public void swapCursor(Cursor cursor) {
@@ -74,6 +82,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.Contacts
         holder.contactNumberTv.setText(String.valueOf(number));
 
         if (selection != ContactActivity.NOT_SELECTED_INT) {
+            currentSelectionId = id;
             holder.itemView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.colorSelectedContact));
             holder.isSelected = true;
         } else {

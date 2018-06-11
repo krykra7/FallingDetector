@@ -178,6 +178,10 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
         uri = uri.buildUpon().appendPath(stringId).build();
 
+        if (((ContactAdapter.ContactsAdapterViewHolder) viewHolder).getSelected()) {
+            contactAdapter.setCurrentSelectionId(null);
+        }
+
         getContentResolver().delete(uri, null, null);
 
         getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
@@ -200,6 +204,20 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
         getContentResolver().update(uri, contentValues, null, null);
 
+        if (contactAdapter.getCurrentSelectionId() != null) {
+            updatePreviousSelection();
+        }
+
         getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
+    }
+
+    private void updatePreviousSelection() {
+        Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
+        uri = uri.buildUpon().appendPath(Integer.toString(contactAdapter.getCurrentSelectionId())).build();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DetectorContract.DetectorEntry.COLUMN_SELECTED, NOT_SELECTED_INT);
+
+        getContentResolver().update(uri, contentValues, null, null);
     }
 }
