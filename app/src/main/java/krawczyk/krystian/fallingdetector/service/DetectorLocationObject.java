@@ -1,6 +1,6 @@
 package krawczyk.krystian.fallingdetector.service;
 
-public class DetectorLocation {
+public class DetectorLocationObject {
 
     private double Latitude;
     private double Longitude;
