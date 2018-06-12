@@ -11,4 +11,7 @@
     <string name="contact_dialog_title">Add Contact</string>
     <string name="contact_dialog_submit_text">Add</string>
     <string name="contact_dialog_cancel_text">Cancel</string>
+
+    <!--Location Provider-->
+    <string name="location_service_geocoder">Could not connect to geocoder</string>
 </resources>

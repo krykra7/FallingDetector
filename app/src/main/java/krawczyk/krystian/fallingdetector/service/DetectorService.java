@@ -14,6 +14,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.SmsManager;
+import android.widget.Toast;
 
 import java.util.Objects;
 
@@ -65,7 +67,7 @@ public class DetectorService extends Service implements SensorEventListener {
 
         if (isFreeFallStarted) {
             if (currentAcceleration >= 20) {
-                showNotification();
+                handleFallDetection();
                 isFreeFallStarted = false;
             }
         }
@@ -75,7 +77,24 @@ public class DetectorService extends Service implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    private void showNotification() {
+    private void handleFallDetection() {
+        SingleShotLocationProvider.requestSingleUpdate(this, location -> {
+            String message = new StringBuilder()
+                    .append(location.getStreet())
+                    .append(" ")
+                    .append(location.getStreetNumber())
+                    .append(" ")
+                    .append(location.getCity())
+                    .append(" ")
+                    .append(location.getCountry())
+                    .toString();
+
+            showNotification(message);
+            sendSmsMessage(message);
+        });
+    }
+
+    private void showNotification(String message) {
         final NotificationManager notificationManager = (NotificationManager) this.getSystemService
                 (NOTIFICATION_SERVICE);
 
@@ -83,6 +102,7 @@ public class DetectorService extends Service implements SensorEventListener {
                 .getActivity(this, 0, new Intent(this, MainActivity.class), 0);
         Notification notification = new NotificationCompat.Builder(this)
                 .setContentTitle("Test accelerometer")
+                .setContentText(message)
                 .setTicker("test nie wiem co to")
                 .setAutoCancel(true)
                 .setSmallIcon(android.R.drawable.ic_notification_overlay)
@@ -91,5 +111,17 @@ public class DetectorService extends Service implements SensorEventListener {
                 .build();
 
         notificationManager.notify(101, notification);
+    }
+
+    private void sendSmsMessage(String smsMessage) {
+        try {
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(Integer.toString(515741371), null, "Wywinąłem orła na ryj\n" + smsMessage,
+                    null, null);
+            Toast.makeText(this, "Message sent", Toast.LENGTH_SHORT).show();
+        } catch (Exception ex) {
+            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+            ex.printStackTrace();
+        }
     }
 }

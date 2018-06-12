@@ -164,27 +164,21 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                if (!((ContactAdapter.ContactsAdapterViewHolder) viewHolder).getSelected()) {
-                    handleSwipe(viewHolder);
+                int contactId = (int) viewHolder.itemView.getTag();
+
+                String stringId = Integer.toString(contactId);
+                Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
+                uri = uri.buildUpon().appendPath(stringId).build();
+
+                if (((ContactAdapter.ContactsAdapterViewHolder) viewHolder).getSelected()) {
+                    contactAdapter.setCurrentSelectionId(null);
                 }
+
+                getContentResolver().delete(uri, null, null);
+
+                getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
             }
         }).attachToRecyclerView(contactRecyclerView);
-    }
-
-    private void handleSwipe(RecyclerView.ViewHolder viewHolder) {
-        int contactId = (int) viewHolder.itemView.getTag();
-
-        String stringId = Integer.toString(contactId);
-        Uri uri = DetectorContract.DetectorEntry.CONTENT_URI;
-        uri = uri.buildUpon().appendPath(stringId).build();
-
-        if (((ContactAdapter.ContactsAdapterViewHolder) viewHolder).getSelected()) {
-            contactAdapter.setCurrentSelectionId(null);
-        }
-
-        getContentResolver().delete(uri, null, null);
-
-        getSupportLoaderManager().restartLoader(CONTACT_LOADER_ID, null, ContactActivity.this);
     }
 
     @Override

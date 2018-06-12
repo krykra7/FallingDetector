@@ -1,20 +1,18 @@
 package krawczyk.krystian.fallingdetector;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.os.Build;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.SmsManager;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import krawczyk.krystian.fallingdetector.service.DetectorService;
 
-//Todo: move send sms code to service
 public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.btn_contacts)
@@ -27,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setupOnClickListener();
         requestPermission();
-//        runService();
+        runService();
     }
 
     private void setupOnClickListener() {
@@ -42,20 +40,17 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
     }
 
-    private void testSendSms() {
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(Integer.toString(731147978), null, "test", null, null);
-            Toast.makeText(this, "Message sent", Toast.LENGTH_SHORT).show();
-        } catch (Exception ex) {
-            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
-            ex.printStackTrace();
-        }
-    }
-
+    @SuppressLint("NewApi")
     private void requestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, 10);
+        String[] permissions = new String[]{
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION};
+
+        for (String permission : permissions) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(permissions, 10);
+            }
         }
     }
 }
