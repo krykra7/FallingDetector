@@ -1,17 +1,18 @@
 <resources>
-    <string name="app_name">FallingDetector</string>
-    <string name="title_activity_contact">ContactActivity</string>
+    <string name="app_name">Detektor Upadku</string>
+    <string name="title_activity_contact">Lista Kontaktów</string>
     <string name="activity_main_contacts">Contacts</string>
+    <string name="basic_fall_message">Wywinąłem orła\n</string>
 
     <!--Contacts dialog-->
-    <string name="contact_dialog_number">Number</string>
-    <string name="contact_dialog_name">Name</string>
-    <string name="contact_dialog_surname">Surname</string>
-    <string name="contact_dialog_message">Message</string>
-    <string name="contact_dialog_title">Add Contact</string>
-    <string name="contact_dialog_submit_text">Add</string>
-    <string name="contact_dialog_cancel_text">Cancel</string>
+    <string name="contact_dialog_number">Numer</string>
+    <string name="contact_dialog_name">Imię</string>
+    <string name="contact_dialog_surname">Nazwisko</string>
+    <string name="contact_dialog_title">Dodaj kontakt</string>
+    <string name="contact_dialog_submit_text">Dodaj</string>
+    <string name="contact_dialog_cancel_text">Anuluj</string>
 
     <!--Location Provider-->
     <string name="location_service_geocoder">Could not connect to geocoder</string>
+    <string name="main_activity_content_description">Main activity image</string>
 </resources>

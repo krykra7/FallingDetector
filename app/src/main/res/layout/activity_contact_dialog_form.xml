@@ -37,15 +37,4 @@
         android:inputType="text"
         android:textSize="@dimen/form_item_text_size"/>
 
-    <EditText
-        android:id="@+id/et_message_field"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/form_item_spacing"
-        android:layout_marginTop="@dimen/form_item_spacing"
-        android:background="@android:color/transparent"
-        android:hint="@string/contact_dialog_message"
-        android:inputType="text"
-        android:textSize="@dimen/form_item_text_size"/>
-
 </LinearLayout>

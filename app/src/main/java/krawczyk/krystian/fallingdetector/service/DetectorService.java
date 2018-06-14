@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,28 +20,30 @@ import android.widget.Toast;
 
 import java.util.Objects;
 
+import krawczyk.krystian.fallingdetector.ContactActivity;
 import krawczyk.krystian.fallingdetector.MainActivity;
+import krawczyk.krystian.fallingdetector.R;
+import krawczyk.krystian.fallingdetector.data.DetectorContract;
 
 //Todo: delete test code, add better algorithm and send sms to contact from list
 
 public class DetectorService extends Service implements SensorEventListener {
 
+    private static final int STATIC_DELAY_COUNTER = 1;
+
     private final static int AXIS_X_INDEX = 0;
     private final static int AXIS_Y_INDEX = 1;
     private final static int AXIS_Z_INDEX = 2;
 
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private float acceleration;
     private float currentAcceleration;
-    private float lastAcceleration;
     private boolean isFreeFallStarted = false;
+    private int sensorCounterDelay = 0;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        accelerometer = Objects.requireNonNull(sensorManager).getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI, new Handler());
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        Sensor accelerometer = Objects.requireNonNull(sensorManager).getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorManager.registerListener(this, accelerometer, 50000, new Handler());
         return START_STICKY;
     }
 
@@ -52,25 +55,55 @@ public class DetectorService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float x = event.values[AXIS_X_INDEX];
-        float y = event.values[AXIS_Y_INDEX];
-        float z = event.values[AXIS_Z_INDEX];
+        float gravity[] = {0.0f, 0.0f, 0.0f};
 
-        lastAcceleration = currentAcceleration;
-        currentAcceleration = (float) Math.sqrt((double) (x * x + y * y + z * z));
+        // low pass filter
+        final float alpha = 0.8f;
+
+        gravity[AXIS_X_INDEX] = alpha * gravity[AXIS_X_INDEX] + (1 - alpha) * event.values[AXIS_X_INDEX];
+        gravity[AXIS_Y_INDEX] = alpha * gravity[AXIS_Y_INDEX] + (1 - alpha) * event.values[AXIS_Y_INDEX];
+        gravity[AXIS_Z_INDEX] = alpha * gravity[AXIS_Z_INDEX] + (1 - alpha) * event.values[AXIS_Z_INDEX];
+
+        float linearAccelerationX = event.values[AXIS_X_INDEX] - gravity[AXIS_X_INDEX];
+        float linearAccelerationY = event.values[AXIS_Y_INDEX] - gravity[AXIS_Y_INDEX];
+        float linearAccelerationZ = event.values[AXIS_Z_INDEX] - gravity[AXIS_Z_INDEX];
+
+        currentAcceleration = getAccelerationSpeed(linearAccelerationX, linearAccelerationY, linearAccelerationZ);
 
 //        acceleration = currentAcceleration - lastAcceleration;
 
         if (currentAcceleration <= 3) {
             isFreeFallStarted = true;
+            sensorCounterDelay = 0;
         }
 
+        if (isFreeFallStarted && sensorCounterDelay == STATIC_DELAY_COUNTER) {
+            detectFalling();
+
+        }
+
+        sensorCounterDelay++;
+    }
+
+    private void detectFalling() {
         if (isFreeFallStarted) {
             if (currentAcceleration >= 20) {
                 handleFallDetection();
                 isFreeFallStarted = false;
             }
         }
+
+        if (currentAcceleration > 3 && currentAcceleration < 20) {
+            isFreeFallStarted = false;
+        }
+    }
+
+    private float getAccelerationSpeed(float accelerationX, float accelerationY, float accelerationZ) {
+        double xPow = Math.pow(accelerationX, 2);
+        double yPow = Math.pow(accelerationY, 2);
+        double zPow = Math.pow(accelerationZ, 2);
+
+        return (float) Math.sqrt(xPow + yPow + zPow);
     }
 
     @Override
@@ -103,7 +136,7 @@ public class DetectorService extends Service implements SensorEventListener {
         Notification notification = new NotificationCompat.Builder(this)
                 .setContentTitle("Test accelerometer")
                 .setContentText(message)
-                .setTicker("test nie wiem co to")
+                .setTicker("accelerometer")
                 .setAutoCancel(true)
                 .setSmallIcon(android.R.drawable.ic_notification_overlay)
                 .setDefaults(Notification.DEFAULT_ALL)
@@ -114,10 +147,15 @@ public class DetectorService extends Service implements SensorEventListener {
     }
 
     private void sendSmsMessage(String smsMessage) {
+        SharedPreferences preferences = getApplicationContext()
+                .getSharedPreferences(ContactActivity.ACTIVITY_PREFS, MODE_PRIVATE);
+
+        int phoneNumber = preferences.getInt(DetectorContract.DetectorEntry.COLUMN_NUMBER, 0);
+
         try {
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(Integer.toString(515741371), null, "Wywinąłem orła na ryj\n" + smsMessage,
-                    null, null);
+            smsManager.sendTextMessage(Integer.toString(phoneNumber), null,
+                    this.getString(R.string.basic_fall_message) + smsMessage, null, null);
             Toast.makeText(this, "Message sent", Toast.LENGTH_SHORT).show();
         } catch (Exception ex) {
             Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();

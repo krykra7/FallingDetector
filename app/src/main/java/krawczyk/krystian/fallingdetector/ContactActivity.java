@@ -14,6 +14,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -57,20 +58,29 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener((View view) -> getInsertContactDialog().show());
+        fab.setOnClickListener((View view) -> getContactDialogForm().show());
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         contactRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         contactAdapter = new ContactAdapter(this);
         contactRecyclerView.setAdapter(contactAdapter);
+        setupDividerItemDecoration();
 
         attachSwipeToDelete();
 
         getSupportLoaderManager().initLoader(CONTACT_LOADER_ID, null, this);
     }
 
-    private MaterialDialog getInsertContactDialog() {
+    private void setupDividerItemDecoration() {
+        LinearLayoutManager layoutManager = (LinearLayoutManager) contactRecyclerView.getLayoutManager();
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(contactRecyclerView.getContext(),
+                layoutManager.getOrientation());
+        dividerItemDecoration.setDrawable(Objects.requireNonNull(this.getDrawable(R.drawable.horizontal_divider)));
+        contactRecyclerView.addItemDecoration(dividerItemDecoration);
+    }
+
+    private MaterialDialog getContactDialogForm() {
         return new MaterialDialog.Builder(this)
                 .title(R.string.contact_dialog_title)
                 .customView(R.layout.activity_contact_dialog_form, true)
@@ -84,14 +94,12 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
         int number = Integer.valueOf(((EditText) dialogView.findViewById(R.id.et_number_field)).getText().toString());
         String name = ((EditText) dialogView.findViewById(R.id.et_name_field)).getText().toString();
         String surname = ((EditText) dialogView.findViewById(R.id.et_surname_field)).getText().toString();
-        String message = ((EditText) dialogView.findViewById(R.id.et_message_field)).getText().toString();
 
         ContentValues contentValues = new ContentValues();
 
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_NUMBER, number);
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_NAME, name);
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_SURNAME, surname);
-        contentValues.put(DetectorContract.DetectorEntry.COLUMN_MESSAGE, message);
         contentValues.put(DetectorContract.DetectorEntry.COLUMN_SELECTED, NOT_SELECTED_INT);
 
         Uri uri = getContentResolver().insert(DetectorContract.DetectorEntry.CONTENT_URI, contentValues);
@@ -183,7 +191,6 @@ public class ContactActivity extends AppCompatActivity implements LoaderManager.
 
     @Override
     public void onSelectionChanged(ContactAdapter.ContactsAdapterViewHolder viewHolder) {
-        //todo solve multi selected contacts
         Context context = getApplicationContext();
         SharedPreferences.Editor editor = context.getSharedPreferences(ACTIVITY_PREFS, MODE_PRIVATE).edit();
 
