@@ -38,6 +38,7 @@ public class DetectorService extends Service implements SensorEventListener {
     private float currentAcceleration;
     private boolean isFreeFallStarted = false;
     private int sensorCounterDelay = 0;
+    private float gravity[] = {0.0f, 0.0f, 0.0f};
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -55,8 +56,6 @@ public class DetectorService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float gravity[] = {0.0f, 0.0f, 0.0f};
-
         // low pass filter
         final float alpha = 0.8f;
 
@@ -156,7 +155,7 @@ public class DetectorService extends Service implements SensorEventListener {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(Integer.toString(phoneNumber), null,
                     this.getString(R.string.basic_fall_message) + smsMessage, null, null);
-            Toast.makeText(this, "Message sent", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.detector_service_message_sent_toast, Toast.LENGTH_SHORT).show();
         } catch (Exception ex) {
             Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
             ex.printStackTrace();
